@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<!-- Framework Scripts -->
+	<script type='text/javascript' src='https://ajax.aspnetcdn.com/ajax/knockout/knockout-3.0.0.js'></script>
+	<script type='text/javascript' src='https://code.jquery.com/jquery-2.1.1.min.js'></script>
+	<script type='text/javascript' src='js/jquery.cookie.js'></script>
+	
+	<!-- App Scripts -->
+	<script type='text/javascript' src='js/SpotifyHelper.js'></script>
+	
+	<!-- App Styles -->
+	<link rel="stylesheet" type="text/css" href="css/styles.css">
+	
+	<title>Concert Man!</title>
+</head>
+<body>
+	<h1>Let's find you some concerts to attend!</h1>
+	
+	<div>
+		<span>Spotify status: <span data-bind="if: SpotifyAccessToken" class="good">Logged in!</span><span data-bind="ifnot: SpotifyAccessToken" class="bad">Not logged in</span></span>
+	</div>
+	
+	
+	<!-- Spotify login div. -->
+	<div data-bind="ifnot: SpotifyAccessToken"><button data-bind="click: spotifyAuthorize">Log into Spotify</button></div>
+	
+	<!-- Main App, to be shown when the user is Spotify auth'd -->
+	<div data-bind="if: SpotifyAccessToken">
+		<div><span>Spotify Access Token: <span data-bind="text: SpotifyAccessToken"></span></span></div>
+		<div><span>Spotify User ID: <span data-bind="text: SpotifyUserId"></span></span></div>
+		<button data-bind="click: spotifyGetArtists">Get Your Artists</button>
+		
+		<h2>Playlists:</h2>
+		<div data-bind="foreach: SpotifyPlaylists">
+			<div>
+				<span data-bind="if: mine">(mine)</span>
+				<span style="font-weight: bold" data-bind="text: name"></span>:
+				<span data-bind="text: id"></span>
+			</div>
+		</div>
+		
+	</div>
+	
+	<textarea id="debug" cols="70" rows="10" readonly></textarea>
+	
+<script type='text/javascript' src='js/app.js'></script>
+</body>
+</html>
