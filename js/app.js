@@ -10,36 +10,57 @@ function ConcertManViewModel() {
 	this.SpotifyPlaylists = ko.observableArray();
 	this.SpotifyHelper = new SpotifyHelper(this.SpotifyAccessToken);
 	
-	this.SpotifyHelper.WriteAccessTokenCookie();
-	
 	this.spotifyAuthorize = function() {
 		this.SpotifyHelper.RedirectToSpotifyAuth();
 	};
 	
-	this.spotifyGetArtists = function() {
-		if (null == this.SpotifyUserId) {
+	this.spotifyGetPlaylists = function() {
+		if (this.SpotifyUserId) {
+			self.SpotifyHelper.SpotifyApi.GetAllPlaylists(this.SpotifyUserId, function (allPlaylists){
+				window.localStorage.clear("playlists");
+				
+				allPlaylists.forEach(function(playlist) {
+					// Set the "mine" flag if the playlist is owned by the current user.
+					if (playlist.owner.id == self.SpotifyUserId) {
+						playlist.mine = true;
+					} else {
+						playlist.mine = false;
+					}
+					
+					self.SpotifyPlaylists.push(playlist);
+				});
+				
+				window.localStorage.setItem("playlists", JSON.stringify(self.SpotifyPlaylists.peek()));
+			});
+		} else {
+			// If we don't have a user ID stored, one needs to retrieved.
 			self.SpotifyHelper.SpotifyApi.GetUserId(this.SpotifyAccessToken, function (userId) {
 				this.SpotifyUserId = userId;
 				$.cookie("spotify_user_id", userId);
-			});
-		};
-		
-		self.SpotifyHelper.SpotifyApi.GetAllPlaylists(this.SpotifyUserId, function (allPlaylists){
-			allPlaylists.forEach(function(playlist) {
-				// Set the "mine" flag if the playlist is owned by the current user.
-				if (playlist.owner.id == self.SpotifyUserId) {
-					playlist.mine = true;
-				} else {
-					playlist.mine = false;
-				}
 				
-				self.SpotifyPlaylists.push(playlist);
+				// Re-call this function with a valid user ID.
+				self.spotifyGetPlaylists();
 			});
-		});
+		}
 	};
+	
+	if (this.SpotifyHelper.IsAuthorizationCallback()) {
+		var tokenResponse = this.SpotifyHelper.GetAccessTokenFromUrlHash(window.location.hash);
+		this.SpotifyHelper.WriteAccessTokenCookie(tokenResponse.accessToken, tokenResponse.expiry);
+		
+		// This saves the access token to a view-model scope variable, while also refreshing the view.
+		this.SpotifyAccessToken = tokenResponse.accessToken;
+	}
+	
+	// Init code
+	var storedPlaylists = window.localStorage.getItem("playlists");
+	if (storedPlaylists && this.SpotifyHelper.IsLoggedIn()) {
+		eval(storedPlaylists).forEach(function(playlist) {
+			self.SpotifyPlaylists.push(playlist);
+		});
+	}
 }
 
 // Export 'cvm' for the debug window.
 var cvm = new ConcertManViewModel();
-
 ko.applyBindings(cvm);

@@ -8,6 +8,10 @@ var SpotifyHelper = function(accessToken) {
 	var accessToken;
 	var allPlaylists = [];
 	
+	this.IsLoggedIn = function() {
+		return accessToken != null;
+	};
+	
 	this.RedirectToSpotifyAuth = function() {
 		window.location.href =
 				"https://accounts.spotify.com/authorize?client_id=" + spotifyClientId +
@@ -15,20 +19,24 @@ var SpotifyHelper = function(accessToken) {
 				"&scope=playlist-read-private%20user-library-read";
 	};
 
-	// Writes a cookie with the user's Spotify access token to make API calls. The presence of this
-	// cookie is used to determine if a user is logged in or not.
-	this.WriteAccessTokenCookie = function() {
-		if (!IsAuthorizationCallback()) return;
+	this.GetAccessTokenFromUrlHash = function(urlHash) {
+		urlHash = urlHash.replace("#", "&");
+		var token = GetParameterByName("access_token", urlHash);
+		var authLifetimeSecs = GetParameterByName("expires_in", urlHash);
 		
-		var hashQueryString = window.location.hash.replace("#", "&");
-		
-		var token = GetParameterByName("access_token", hashQueryString);
-		var authLifetimeSecs = GetParameterByName("expires_in", hashQueryString);
 		var expiryTime = new Date();
 		expiryTime.setTime(expiryTime.getTime() + (authLifetimeSecs * 1000));
 		
+		// Save to accessToken instance var.
 		accessToken = token;
-		document.cookie = "spotify_access_token=" + token + "; expires=" + expiryTime.toGMTString();
+		
+		return { accessToken: token, expiry: expiryTime };
+	};
+	
+	// Writes a cookie with the user's Spotify access token to make API calls. The presence of this
+	// cookie is used to determine if a user is logged in or not.
+	this.WriteAccessTokenCookie = function(token, expiry) {		
+		document.cookie = "spotify_access_token=" + token + "; expires=" + expiry.toGMTString();
 	};
 
 	this.SpotifyApi = new Object();
@@ -61,20 +69,15 @@ var SpotifyHelper = function(accessToken) {
 		}).done(successCallback)
 		.fail(function(xhr) {
 			// Attempt to refresh the user's token on a 403.
-			if (xhr.status == 401) {
-				alert("Auth token expired. Re-authing.");
+			if (xhr.status == 401 && xhr.responseJSON.error.message == "The access token expired") {
 				self.RedirectToSpotifyAuth();
 			}
-			
 			d("request for " + url + " failure.");
 		});
 	};
 	
-	/*
-	 * Privates
-	 */
-	 // Checks to see if the current request is a result of a Spotify authorize callback.
-	var IsAuthorizationCallback = function() {
+	// Checks to see if the current request is a result of a Spotify authorize callback.
+	this.IsAuthorizationCallback = function() {
 		if (window.location.hash.indexOf("#access_token") >= 0) {
 			return true;
 		} else {
@@ -82,6 +85,9 @@ var SpotifyHelper = function(accessToken) {
 		}
 	};
 	
+	/*
+	 * Privates
+	 */	
 	var GetAllPlaylistsInternal = function(userId, offset, successCallback) {
 		d("Getting playlists " + offset + " - " + (offset + maxPlaylistsPerRequest));
 		self.SpotifyApi.SendApiQuery(

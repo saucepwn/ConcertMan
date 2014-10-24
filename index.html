@@ -29,7 +29,7 @@
 	<div data-bind="if: SpotifyAccessToken">
 		<div><span>Spotify Access Token: <span data-bind="text: SpotifyAccessToken"></span></span></div>
 		<div><span>Spotify User ID: <span data-bind="text: SpotifyUserId"></span></span></div>
-		<button data-bind="click: spotifyGetArtists">Get Your Artists</button>
+		<button data-bind="click: spotifyGetPlaylists">Get Your Playlists</button>
 		
 		<h2>Playlists:</h2>
 		<div data-bind="foreach: SpotifyPlaylists">
