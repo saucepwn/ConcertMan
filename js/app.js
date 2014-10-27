@@ -18,7 +18,7 @@ function ConcertManViewModel() {
 	// Handler when "Get Your Playlists" is clicked.
 	this.spotifyGetPlaylists = function() {
 		if (this.SpotifyUserId) {
-			self.SpotifyHelper.SpotifyApi.GetAllPlaylists(this.SpotifyUserId, function (allPlaylists){
+			self.SpotifyHelper.SpotifyApi.GetAllPlaylists(self.SpotifyUserId, function (allPlaylists){
 				window.localStorage.clear("playlists");
 				self.SpotifyPlaylists([]);
 				
@@ -39,7 +39,7 @@ function ConcertManViewModel() {
 			// If we don't have a user ID stored, one needs to retrieved.
 			self.SpotifyHelper.SpotifyApi.GetUserId(function (userId) {
 				// Re-call this function with a valid user ID.
-				this.SpotifyUserId = userId;
+				self.SpotifyUserId = userId;
 				self.spotifyGetPlaylists();
 			});
 		}
@@ -50,8 +50,8 @@ function ConcertManViewModel() {
 		self.UserArtists([]);
 		if (this.SpotifyUserId) {
 			self.SpotifyHelper.SpotifyApi.GetAllArtists(
-					this.SpotifyUserId,
-					this.SpotifyPlaylists,
+					self.SpotifyUserId,
+					self.SpotifyPlaylists,
 					function (rank) {
 						rank.forEach(function (entry) {
 							self.UserArtists.push(entry);
@@ -61,7 +61,7 @@ function ConcertManViewModel() {
 			// If we don't have a user ID stored, one needs to be retrieved.
 			self.SpotifyHelper.SpotifyApi.GetUserId(function (userId) {
 				// Re-call this function with a valid user ID.
-				this.SpotifyUserId = userId;
+				self.SpotifyUserId = userId;
 				self.spotifyGetArtists();
 			});
 		}
