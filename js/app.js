@@ -37,17 +37,27 @@ function ConcertManViewModel() {
 		} else {
 			// If we don't have a user ID stored, one needs to retrieved.
 			self.SpotifyHelper.SpotifyApi.GetUserId(function (userId) {
-				this.SpotifyUserId = userId;
-				$.cookie("spotify_user_id", userId);
-				
 				// Re-call this function with a valid user ID.
+				this.SpotifyUserId = userId;
 				self.spotifyGetPlaylists();
 			});
 		}
 	};
 	
 	this.spotifyGetArtists = function() {
-		
+		if (this.SpotifyUserId) {
+			self.SpotifyHelper.SpotifyApi.GetAllArtists(
+					this.SpotifyUserId,
+					this.SpotifyPlaylists,
+					function () { alert('all done'); });
+		} else {
+			// If we don't have a user ID stored, one needs to be retrieved.
+			self.SpotifyHelper.SpotifyApi.GetUserId(function (userId) {
+				// Re-call this function with a valid user ID.
+				this.SpotifyUserId = userId;
+				self.spotifyGetArtists();
+			});
+		}
 	};
 	
 	if (this.SpotifyHelper.IsAuthorizationCallback()) {

@@ -7,6 +7,10 @@ var JsRateLimiter = function(rateLimit_p, rateIntervalMillis_p) {
 	var rateWindowBegin = 0;
 	var rateWindowQueries = 0;
 	
+	var idCounter = 0;
+	var totalRequestsQueued = 0;
+	var totalRequestsServed = 0;
+	
 	var requestQueue = new Queue();
 	
 	function BuildNewRateWindowIfNecessary() {
@@ -29,6 +33,14 @@ var JsRateLimiter = function(rateLimit_p, rateIntervalMillis_p) {
 		return !requestQueue.isEmpty();
 	};
 	
+	this.GetTotalRequestsQueued = function() {
+		return totalRequestsQueued;
+	};
+	
+	this.GetTotalRequestsServed = function() {
+		return totalRequestsServed;
+	};
+	
 	// Serves all queued requests until the rate window is hit or the queue is emptied, whichever
 	// comes first.
 	this.FlushQueue = function() {
@@ -36,16 +48,20 @@ var JsRateLimiter = function(rateLimit_p, rateIntervalMillis_p) {
 		BuildNewRateWindowIfNecessary();
 		
 		while (rateWindowQueries < rateLimit && IsQueueWaiting()) {
-			d("Dequeuing request and running at " + new Date().getTime());
+			var req = requestQueue.dequeue();
 			
-			var ftn = requestQueue.dequeue();
-			ftn();
+			d("Dequeuing request " + req.id + " and running at " + new Date().getTime());
+			
+			req.ftn();
 			rateWindowQueries++;
+			totalRequestsServed++;
 		}
 		
 		// If there are still tasks waiting in the queue, schedule another flush.
 		if (IsQueueWaiting()) {
 			setTimeout(self.FlushQueue, GetMillisUntilRateWindowEnd());
+		} else {
+			d("Queue empty!");
 		}
 	};
 	
@@ -53,21 +69,25 @@ var JsRateLimiter = function(rateLimit_p, rateIntervalMillis_p) {
 	this.QueueRequest = function(request) {
 		// Check to see if we're currently in a rate window, or if we need to create one.
 		BuildNewRateWindowIfNecessary();
+		var thisId = idCounter++;
+		totalRequestsQueued++;
 		
 		if (IsQueueWaiting()) {
 			// There are other tasks waiting. Enqueue this task.
-			requestQueue.enqueue(request);
+			d("Queueing request " + thisId);
+			requestQueue.enqueue({ id: thisId, ftn: request });
 			
 		} else if (rateWindowQueries >= rateLimit) {
 			// There are no tasks waiting, but the rate window is full. Enqueue the task and
 			// schedule a queue flush.
-			requestQueue.enqueue(request);
+			requestQueue.enqueue({ id: thisId, ftn: request });
 			setTimeout(self.FlushQueue, GetMillisUntilRateWindowEnd());
 			
 		} else {
 			// The rate window is not full. Run the task immediately.
+			d("Executing request " + thisId + " immediately");
 			request();
-			rateWindowQueries++;
+			totalRequestsServed++;
 		}
 	};
 };

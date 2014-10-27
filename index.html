@@ -9,6 +9,7 @@
 	
 	<!-- App Scripts -->
 	<script type='text/javascript' src='js/JsRateLimiter.js'></script>
+	<script type='text/javascript' src='js/ArtistRanker.js'></script>
 	<script type='text/javascript' src='js/SpotifyHelper.js'></script>
 	
 	<!-- App Styles -->
@@ -32,7 +33,8 @@
 		<div><span>Spotify Access Token: <span data-bind="text: SpotifyAccessToken"></span></span></div>
 		<div><span>Spotify User ID: <span data-bind="text: SpotifyUserId"></span></span></div>
 		<button data-bind="click: spotifyGetPlaylists">Get Your Playlists</button>
-	
+		<button data-bind="click: spotifyGetArtists">Get Your Artists</button>
+		
 		<textarea id="debug" cols="70" rows="10" readonly></textarea>
 	
 		<h2>Artists:</h2>
