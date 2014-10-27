@@ -13,6 +13,10 @@ var SpotifyHelper = function(accessToken) {
 	var rateLimiter =
 			new JsRateLimiter(SpotifyConfig.rateLimitQueries, SpotifyConfig.rateLimitInterval);
 	
+	// Keep track of requests inflight vs. completed
+	var requests = 0;
+	var responses = 0;
+	
 	this.IsLoggedIn = function() {
 		return accessToken != null;
 	};
@@ -74,21 +78,29 @@ var SpotifyHelper = function(accessToken) {
 					request.setRequestHeader("Authorization", "Bearer " + accessToken);
 				},
 				url: url
-			}).done(successCallback)
+			})
+			.done(successCallback)
 			.fail(function(xhr) {
 				// Attempt to refresh the user's token on a 403.
 				if (xhr.status == 401 && xhr.responseJSON.error.message == "The access token expired") {
 					self.RedirectToSpotifyAuth();
 				}
 				d("request for " + url + " failure.");
+			})
+			.always(function() {
+				responses++;
 			});
 		};
 		
+		requests++;
 		rateLimiter.QueueRequest(apiCallFtn);
 	};
 	
 	// Retrieves all of a user's artists by enumerating playlists and their artist library.
 	this.SpotifyApi.GetAllArtists = function(userId, playlists, successCallback) {
+		requests = 0;
+		responses = 0;
+		
 		ko.utils.arrayForEach(playlists(), function (playlist) {
 			allArtistsByPlaylist[playlist.id] = {};
 			GetArtistsInPlaylist(
@@ -98,10 +110,20 @@ var SpotifyHelper = function(accessToken) {
 					playlist.mine,
 					0,
 					function(rankedArtists) {
-					allArtistsByPlaylist[playlist.id] = rankedArtists;
-				
-				// TODO: Make sure all queries have returned, then call the success handler.
-			});
+						allArtistsByPlaylist[playlist.id] = rankedArtists;
+						
+						// Make sure all queries have returned, then call the success handler. We
+						// need to add one to 'responses' here, since the last response won't
+						// increment until this handler completes.
+						if (requests == responses + 1) {
+							d("Requests: " + requests + " responses: " + responses + " finishing up.");
+							
+							// Rank the artists.
+							var rank = ArtistRanker.MergePlaylistRanks(allArtistsByPlaylist);
+							successCallback(rank);
+						}
+					}
+			);
 		});
 	};
 	

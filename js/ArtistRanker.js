@@ -28,3 +28,43 @@ ArtistRanker.ScoreArtistsSinglePlaylist = function(artists, isOwnPlaylist) {
 	
 	return rankedArtists;
 };
+
+ArtistRanker.MergePlaylistRanks = function(rankedArtistsByPlaylist) {
+	var globalRankMap = {};
+	
+	for (var playlist in rankedArtistsByPlaylist) {
+		if (rankedArtistsByPlaylist.hasOwnProperty(playlist)) {
+			// This is a playlist object. It will contain a collection of artists.
+			for (var artist in rankedArtistsByPlaylist[playlist]) {
+				if (rankedArtistsByPlaylist[playlist].hasOwnProperty(artist)) {
+					// Add or update this artist in the global rank.
+					if (globalRankMap.hasOwnProperty(artist)) {
+						globalRankMap[artist].rank += rankedArtistsByPlaylist[playlist][artist].rank;
+					} else {
+						globalRankMap[artist] = {
+							name: rankedArtistsByPlaylist[playlist][artist].name,
+							rank: rankedArtistsByPlaylist[playlist][artist].rank
+						};
+					}
+				}
+			}
+		}
+	}
+	
+	// Convert the map to an array.
+	var globalRank = [];
+	for (var entry in globalRankMap) {
+		if (globalRankMap.hasOwnProperty(entry)) {
+			var obj = globalRankMap[entry];
+			obj.id = entry;
+			globalRank.push(obj);
+		}
+	}
+	
+	// Sort that shit by rank.
+	globalRank.sort(function(a,b) {
+		return b.rank - a.rank;
+	});
+	
+	return globalRank;
+};

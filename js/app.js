@@ -15,6 +15,7 @@ function ConcertManViewModel() {
 		this.SpotifyHelper.RedirectToSpotifyAuth();
 	};
 	
+	// Handler when "Get Your Playlists" is clicked.
 	this.spotifyGetPlaylists = function() {
 		if (this.SpotifyUserId) {
 			self.SpotifyHelper.SpotifyApi.GetAllPlaylists(this.SpotifyUserId, function (allPlaylists){
@@ -44,12 +45,18 @@ function ConcertManViewModel() {
 		}
 	};
 	
+	// Handler when "Get Your Artists" button is clicked.
 	this.spotifyGetArtists = function() {
+		self.UserArtists([]);
 		if (this.SpotifyUserId) {
 			self.SpotifyHelper.SpotifyApi.GetAllArtists(
 					this.SpotifyUserId,
 					this.SpotifyPlaylists,
-					function () { alert('all done'); });
+					function (rank) {
+						rank.forEach(function (entry) {
+							self.UserArtists.push(entry);
+						});
+					});
 		} else {
 			// If we don't have a user ID stored, one needs to be retrieved.
 			self.SpotifyHelper.SpotifyApi.GetUserId(function (userId) {
