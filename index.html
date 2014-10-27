@@ -5,8 +5,10 @@
 	<script type='text/javascript' src='https://ajax.aspnetcdn.com/ajax/knockout/knockout-3.0.0.js'></script>
 	<script type='text/javascript' src='https://code.jquery.com/jquery-2.1.1.min.js'></script>
 	<script type='text/javascript' src='js/jquery.cookie.js'></script>
+	<script type='text/javascript' src='js/Queue.js'></script>
 	
 	<!-- App Scripts -->
+	<script type='text/javascript' src='js/JsRateLimiter.js'></script>
 	<script type='text/javascript' src='js/SpotifyHelper.js'></script>
 	
 	<!-- App Styles -->
@@ -30,9 +32,18 @@
 		<div><span>Spotify Access Token: <span data-bind="text: SpotifyAccessToken"></span></span></div>
 		<div><span>Spotify User ID: <span data-bind="text: SpotifyUserId"></span></span></div>
 		<button data-bind="click: spotifyGetPlaylists">Get Your Playlists</button>
-		
+	
+		<textarea id="debug" cols="70" rows="10" readonly></textarea>
+	
+		<h2>Artists:</h2>
+		<div data-bind="foreach: UserArtists">
+			<div>
+				
+			</div>
+		</div>
+	
 		<h2>Playlists:</h2>
-		<div data-bind="foreach: SpotifyPlaylists">
+		<div style="overflow: scroll; height: 300px;" data-bind="foreach: SpotifyPlaylists">
 			<div>
 				<span data-bind="if: mine">(mine)</span>
 				<span style="font-weight: bold" data-bind="text: name"></span>:
@@ -42,7 +53,6 @@
 		
 	</div>
 	
-	<textarea id="debug" cols="70" rows="10" readonly></textarea>
 	
 <script type='text/javascript' src='js/app.js'></script>
 </body>

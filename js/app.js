@@ -9,6 +9,7 @@ function ConcertManViewModel() {
 	this.SpotifyUserId = $.cookie("spotify_user_id");
 	this.SpotifyPlaylists = ko.observableArray();
 	this.SpotifyHelper = new SpotifyHelper(this.SpotifyAccessToken);
+	this.UserArtists = ko.observableArray();
 	
 	this.spotifyAuthorize = function() {
 		this.SpotifyHelper.RedirectToSpotifyAuth();
@@ -18,6 +19,7 @@ function ConcertManViewModel() {
 		if (this.SpotifyUserId) {
 			self.SpotifyHelper.SpotifyApi.GetAllPlaylists(this.SpotifyUserId, function (allPlaylists){
 				window.localStorage.clear("playlists");
+				self.SpotifyPlaylists([]);
 				
 				allPlaylists.forEach(function(playlist) {
 					// Set the "mine" flag if the playlist is owned by the current user.
@@ -34,7 +36,7 @@ function ConcertManViewModel() {
 			});
 		} else {
 			// If we don't have a user ID stored, one needs to retrieved.
-			self.SpotifyHelper.SpotifyApi.GetUserId(this.SpotifyAccessToken, function (userId) {
+			self.SpotifyHelper.SpotifyApi.GetUserId(function (userId) {
 				this.SpotifyUserId = userId;
 				$.cookie("spotify_user_id", userId);
 				
@@ -42,6 +44,10 @@ function ConcertManViewModel() {
 				self.spotifyGetPlaylists();
 			});
 		}
+	};
+	
+	this.spotifyGetArtists = function() {
+		
 	};
 	
 	if (this.SpotifyHelper.IsAuthorizationCallback()) {
